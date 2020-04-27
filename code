@@ -1,0 +1,50 @@
+#Código em R
+
+ibrary(tidyverse)
+setwd("C:/Users/gabri/OneDrive/Documentos/R")
+ap<-read_csv("applemobilitytrends-2020-04-22.csv")
+#Leitura de dados por colunas e filtrando apenas por países
+ap_country<-ap%>%
+  gather(key=Data,value=Index,-c("geo_type","region","transportation_type"))%>%
+  filter(geo_type=="country/region")%>%
+  select(region,transportation_type,Data,Index)
+ap_country$Data<-as.Date.character(ap_ti$Data)
+
+view(ap_country)
+
+#Tendência BR desde o início do ano
+ap_br1<-ap_country%>%
+  filter(region=="Brazil")%>%
+           group_by(Data)%>%
+    ggplot(aes(x=Data,y=Index,color=transportation_type))+geom_point()+geom_line()
+ap_br1
+
+#pico em fevereiro provavelmente relacionado ao carnaval
+
+#Tendência de aumento da mobilidade urbana no Brasil, desconsiderando transito
+ap_br2<-ap_country%>%
+  filter(region=="Brazil",
+         Data >= "2020-03-25",
+         transportation_type != "transit")%>%
+  group_by(Data)%>%
+  summarise(avg=mean(Index))%>%
+  ggplot(aes(x=Data,y=avg))+geom_point()+geom_line() + geom_smooth(method = "lm",se=FALSE)
+ap_br2
+
+#Tendência desconsiderando domingo 
+ap_br3<-ap_country%>%
+  mutate(Dia_semana=weekdays(Data))%>%
+  filter(region=="Brazil",
+         Dia_semana != "domingo",
+         transportation_type != "transit",
+         Data>="2020-03-23")%>%
+  group_by(Data,Dia_semana)%>%
+  summarise(avg=mean(Index))%>%
+  ggplot(aes(x=Data,y=avg))+geom_point()+geom_line() + geom_smooth(method = "lm",se=FALSE)
+ap_br3
+#Dois pontos baixos (menor que 40%) referentes à páscoa e feriado Tiradentes
+
+ap_country%>%
+  filter(region=="Brazil"| region=="United States" | region=="France",
+         transportation_type != "transit" )%>%
+  ggplot(aes(x=Data,y=Index,color=region))+geom_line()
