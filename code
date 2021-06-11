@@ -1,6 +1,6 @@
 #Código em R
 
-ibrary(tidyverse)
+library(tidyverse)
 setwd("C:/Users/gabri/OneDrive/Documentos/R")
 ap<-read_csv("applemobilitytrends-2020-04-22.csv")
 #Leitura de dados por colunas e filtrando apenas por países
@@ -10,7 +10,7 @@ ap_country<-ap%>%
   select(region,transportation_type,Data,Index)
 ap_country$Data<-as.Date.character(ap_ti$Data)
 
-view(ap_country)
+
 
 #Tendência BR desde o início do ano
 ap_br1<-ap_country%>%
