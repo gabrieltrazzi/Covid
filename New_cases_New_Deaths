@@ -2,53 +2,35 @@ library(tidyverse)
 library(readxl)
 library(reshape2)
 library(plotly)
+options(scipen=999) #Do not display numbers in scientific notation
 ##Database from OurWorld In data website
 cov<-read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
-##Filtering only to Brazil
-cov_br<-cov%>%filter(location=="Brazil", date >='2021-01-01')
 
-g1<-cov_br%>%select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-date)%>%
-  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")
-           +ggtitle("Br")
+#Exploratory time series for new cases and new deaths daily in some countries
+countries<-list("Brazil","United States","India","United Kingdom", "Spain", 
+                  "Italy","Canada","Japan","Germany","Australia","France","Mexico")
 
-ggplotly(g1)
+  i=1
+  a<-list()
+  for (i in 1:length(countries)){
+    a[[i]]<-cov%>%
+      filter(location==countries[i] & new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
+      gather(key = "Feature",value = "Qty",-date)%>%
+      ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle(countries[[i]])
+print(ggplotly(a[[i]]))
+  }  
 
-#Filtering to Sweden
-SW<-cov%>%
-  filter(location=="Sweden")%>%
-   select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-date)%>%
-    ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("Sw")
-ggplotly(SW)
+#Explorotary analysis over vaccination and new deaths
+for (i in 1:length(countries)){
+  b[[i]]<-cov%>%
+    filter(location==countries[i] & new_deaths>0)%>%
+    select(date,new_deaths,people_fully_vaccinated_per_hundred)%>%
+    ggplot(aes(x=date))+geom_line(aes(y=new_deaths),size=1,color="#69b3a2")+
+    geom_line(aes(y=people_fully_vaccinated_per_hundred*100),size=1,color="gray39")+
+    scale_y_continuous(name="New daily Deaths",
+                       sec.axis = sec_axis(~./100,name = "People Fully Vacc (%)"))+
+    ggtitle(countries[[i]])
+print(b[[i]])
+  }
 
-#Filtering to US
-US<-cov%>%
-  filter(location=="United States")%>%select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-date)%>%
-  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("US")
 
-ggplotly(US)
-
-##Filtering to UK
-UK<-cov%>%
-  filter(location=="United Kingdom" & new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-date)%>%
-  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("UK")
-ggplotly(UK)
-
-#Filtering to EU
-EU<-cov%>%
-  filter(continent=="Europe"& new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-c(date))%>%
-  group_by(date,Feature)%>%
-  summarise(Tot=sum(Qty))%>%
-  ggplot(aes(x=date,y=Tot))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("EU")
-ggplotly(EU)
-
-#Filtering to India
-India<-cov%>%
-  filter(location=="India" & new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
-  gather(key = "Feature",value = "Qty",-date)%>%
-  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("India")
-India
