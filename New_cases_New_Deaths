@@ -1,0 +1,54 @@
+library(tidyverse)
+library(readxl)
+library(reshape2)
+library(plotly)
+##Database from OurWorld In data website
+cov<-read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+##Filtering only to Brazil
+cov_br<-cov%>%filter(location=="Brazil", date >='2021-01-01')
+
+g1<-cov_br%>%select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-date)%>%
+  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")
+           +ggtitle("Br")
+
+ggplotly(g1)
+
+#Filtering to Sweden
+SW<-cov%>%
+  filter(location=="Sweden")%>%
+   select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-date)%>%
+    ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("Sw")
+ggplotly(SW)
+
+#Filtering to US
+US<-cov%>%
+  filter(location=="United States")%>%select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-date)%>%
+  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("US")
+
+ggplotly(US)
+
+##Filtering to UK
+UK<-cov%>%
+  filter(location=="United Kingdom" & new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-date)%>%
+  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("UK")
+ggplotly(UK)
+
+#Filtering to EU
+EU<-cov%>%
+  filter(continent=="Europe"& new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-c(date))%>%
+  group_by(date,Feature)%>%
+  summarise(Tot=sum(Qty))%>%
+  ggplot(aes(x=date,y=Tot))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("EU")
+ggplotly(EU)
+
+#Filtering to India
+India<-cov%>%
+  filter(location=="India" & new_deaths>0)%>%select(date,new_deaths,new_cases)%>%
+  gather(key = "Feature",value = "Qty",-date)%>%
+  ggplot(aes(x=date,y=Qty))+geom_line()+facet_grid(Feature~.,scales = "free_y")+ggtitle("India")
+India
