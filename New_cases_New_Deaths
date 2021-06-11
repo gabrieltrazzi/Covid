@@ -33,4 +33,42 @@ for (i in 1:length(countries)){
 print(b[[i]])
   }
 
+#It's quite cliear that a mass fully vaccination helps to reduce the number of new deaths daily. 
+#BR, eventhough has millions already vaccinated, has low speed in fully vaccination which has not dropped significantly new deaths. 
+
+#Analyzing mobility and new cases in BR from Apple mobility Index (csv file available in https://covid19.apple.com/mobility)
+mob<-read_csv("C:/Users/trazzigl/Downloads/applemobilitytrends-2021-06-09.csv")
+
+#wrangling data to present dates as rows, selecting only BR data and averaging transportation types daily
+mob_br<-mob%>%gather(key = "Date",value="Index",
+             -c("geo_type","region","transportation_type","alternative_name",
+                "sub-region",	"country"))%>%
+  select(region,transportation_type,Date,Index)%>%
+  filter(region=="Brazil")%>%
+  group_by(Date)%>%
+    summarize(avg_mob=mean(Index,na.rm=T))
+ mob_br$Date<-as.Date(mob_br$Date)
+ 
+ #Join tables to cross data from new cases and mobility
+ br_timeseries<-cov%>%filter(location=="Brazil" & new_cases>0)%>%
+  select(date,new_cases_smoothed)%>%
+  inner_join(mob_br,by = c("date" = "Date"))%>%
+  ggplot(aes(x=date))+geom_line(aes(y=new_cases_smoothed),color="gray33",show.legend = T)+
+  geom_line(aes(y=avg_mob*1000),color="green",show.legend = T)+
+  scale_y_continuous(name="New daily Cases",
+                     sec.axis = sec_axis(~./1000,name = "Avg Mobility(%)"))
+
+
+br_points<-cov%>%filter(location=="Brazil" & new_cases>0)%>%
+  select(date,new_cases_smoothed)%>%
+  inner_join(mob_br,by = c("date" = "Date"))%>%
+  ggplot(aes(x=avg_mob,y=new_cases_smoothed))+geom_point()
+
+br_model<-cov%>%filter(location=="Brazil" & new_cases>0)%>%
+  select(date,new_cases_smoothed)%>%
+  inner_join(mob_br,by = c("date" = "Date"))
+model<-lm(formula = new_cases_smoothed~avg_mob,data = br_model)
+summary(model)
+
+
 
